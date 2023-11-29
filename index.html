@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Weather App</title>
+        <script src="https://unpkg.com/vue@3"></script>
+        <script src="https://cdn.jsdelivr.net/npm/dayjs@1.10.4"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet"
+            href="https://pro.fontawesome.com/releases/v5.2.0/css/all.css" />
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+
+        <link rel="stylesheet"
+            href="https://static.fontawesome.com/css/fontawesome-app.css" />
+    </head>
+
+    <body>
+        <div id="app">
+            <div class="h-[10vh] bg-indigo-600">
+                <div class="flex w-[100vw] h-full justify-center items-center">
+                    <h1 class="text-xl font-semibold tracking-widest text-white">
+                        Weather Dashboard
+                    </h1>
+                </div>
+
+                <div class="min-h-[80vh] flex p-5">
+
+                    <div class="w-[50vh]">
+                        <div class>
+                            <h1 class="font-semibold text-2xl">Search for a City</h1>
+                            <div class="mt-2">
+                                <div
+                                    class="flex gap-10 rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                                    <input v-model="cityName" type="text"
+                                        name="username" id="username"
+                                        autocomplete="username"
+                                        class="text-center font-semibold tracking-widest block flex-1 border-0 tracking-widest capitalize bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6">
+                                </div>
+                                <button @click="loadCityNme()" type="button"
+                                    class="mt-3 w-full bg-indigo-600 px-2 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                    Search <i class="ml-3 fas fa-search"></i>
+                                </button>
+
+                            </div>
+                        </div>
+
+                        <div class="mt-10 border-t-2 border-gray-300">
+                            <div class="grid grid-cols-1">
+                                <button v-for="city in citySearchHistory"
+                                    type="button"
+                                    class="rounded-lg mt-3 w-full bg-gray-600 px-2 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                    {{ city }}
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="bg-white px-10">
+                        <div class="mx-auto max-w-7xl px-6 lg:px-8">
+                            <div class="mx-auto max-w-2xl lg:mx-0">
+
+                                <h2
+                                    class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                                    {{ searchTitle }} <img class="ml-2"
+                                        :src="`https://openweathermap.org/img/wn/${currentIconCode}@2x.png`"
+                                        alt>
+                                </h2>
+
+                                <p
+                                    class="mt-6 text-base font-semibold leading-7 text-indigo-600">
+                                    <span
+                                        class="text-black font-semibold italic tracking-widest">Temparature:
+                                    </span>{{ currentTemperature }} <span
+                                        v-if="currentTemperature">°F</span>
+                                </p>
+                                <p
+                                    class="mt-6 text-base font-semibold leading-7 text-indigo-600">
+                                    <span
+                                        class="text-black font-semibold italic tracking-widest">Wind:
+                                    </span>{{ currentWindSpeed }} <span
+                                        v-if="currentWindSpeed">MPH</span>
+                                </p>
+                                <p
+                                    class="mt-6 text-base font-semibold leading-7 text-indigo-600">
+                                    <span
+                                        class="text-black font-semibold italic tracking-widest">Humidity:
+                                    </span> {{ currentHumidity }} <span
+                                        v-if="currentHumidity">%</span>
+                                </p>
+
+                            </div>
+                        </div>
+
+                        <div class="p-6 mt-10">
+                            <h2
+                                class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                                5-Day Forecast:
+                            </h2>
+
+                            <div class=" py-10 grid grid-cols-5 gap-10">
+
+                                <div class=" bg-indigo-600 w-60 h-60 rounded-md">
+                                    <div class="p-4 text-white">
+                                        <h1 class="text-xl tracking-widest">Date</h1>
+
+                                        <div class="my-5 flex justify-start">
+                                            <i class="text-3xl fas fa-sun"></i>
+                                            <!-- <img :src="`https://openweathermap.org/img/wn/${currentIconCode}@2x.png`" alt=""> -->
+                                        </div>
+
+                                        <div class="mt-4 text-lg">
+                                            <p>Temparature: <span
+                                                    class="text-md">30f</span></p>
+                                            <p>Wind: <span class="text-md mt-4">30f</span></p>
+                                            <p>Humidity: <span
+                                                    class="text-md mt-4">30f</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <script>
+        const { createApp, ref, onMounted, computed } = Vue;
+
+        const app = createApp({
+            setup() {
+                const formattedDate = ref("");
+                const apiKey = '1b18ce13c84e21faafb19c931bb29331';
+                const cityName = ref('Nairobi')
+                const currentDay = computed(() => {
+                    return moment().format("M/D/YYYY");
+                });
+                const searchTitle = ref('Nairobi (' + currentDay.value + ')')
+                const currentIconCode = ref(null)
+                const currentTemperature = ref(null)
+                const currentHumidity = ref(null)
+                const currentWindSpeed = ref(null)
+
+                const citySearchHistory = computed(() => {
+                    const saved = localStorage.getItem("cityHistory");
+                    const current = JSON.parse(saved);
+                    return [...new Set(current)];
+                })
+
+
+                const getIconCode = () => {
+                    return
+                }
+
+                onMounted(() => {
+
+                });
+
+                const loadCityNme = () => {
+
+                    const savedSearches = localStorage.getItem("cityHistory");
+                    if (savedSearches == null) {
+                        currentCityHistory = []
+                        currentCityHistory.push(cityName.value);
+                        localStorage.setItem("cityHistory", JSON.stringify(currentCityHistory));
+                    } else {
+                        const currentCityHistory = JSON.parse(savedSearches);
+                        currentCityHistory.push(cityName.value);
+                        localStorage.setItem("cityHistory", JSON.stringify(currentCityHistory));
+                    }
+
+
+                    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityName.value}&appid=${apiKey}`)
+                        // get response and turn it into objects
+                        .then(function (response) {
+                            return response.json();
+                        })
+                        .then(function (response) {
+                            // get city's longitude and latitude
+                            var cityLon = response.coord.lon;
+                            var cityLat = response.coord.lat;
+
+                            fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${cityLat}&lon=${cityLon}&exclude=minutely,hourly,alerts&units=imperial&appid=${apiKey}`)
+                                // get response from one call api and turn it into objects
+                                .then(function (response) {
+                                    return response.json();
+                                })
+                                // get data from response and apply them to the current weather section
+                                .then(function (response) {
+                                    // searchHistoryList(cityName);
+
+                                    searchTitle.value = cityName.value + '(' + currentDay.value + ')'
+
+                                    currentIconCode.value = response.current.weather[0].icon;
+                                    currentTemperature.value = response.current.temp
+                                    currentHumidity.value = response.current.humidity
+                                    currentWindSpeed.value = response.current.wind_speed
+
+                                })
+                        })
+                        .catch(function (err) {
+                            cityName.value = null
+                            alert("We could not find the city you searched for. Please input another city");
+                        });
+                };
+
+                const fiveDayForecast = computed(()=>{
+
+                    const futureDaysForcast = [];
+
+                    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityName.value}&appid=${apiKey}`)
+                        .then(function (response) {
+                            return response.json();
+                        })
+                        .then(function (response) {
+                            // get city's longitude and latitude
+                            var cityLon = response.coord.lon;
+                            var cityLat = response.coord.lat;
+
+                            fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${cityLat}&lon=${cityLon}&exclude=minutely,hourly,alerts&units=imperial&appid=${apiKey}`)
+                                // get response from one call api and turn it into objects
+                                .then(function (response) {
+                                    return response.json();
+                                })
+                                .then(function (response) {
+                                    console.log(response);
+                                    
+                                    for (var i = 1; i <= 5; i++) {
+                                        
+                                        var date = moment().add(i, "d").format("M/D/YYYY");
+                                        var futureIconCode = response.daily[i].weather[0].icon;
+                                        var futureTemp = response.daily[i].temp.day
+                                        var futureHumidity = response.daily[i].humidity
+
+                                        var dayObject = {
+                                            day: i,
+                                            date: date,
+                                            icon: futureIconCode,
+                                            temp: futureTemp,
+                                            humid: futureHumidity
+                                        }
+
+
+                                        futureDaysForcast.push(dayObject);
+                                    }
+
+                                })
+                        })
+
+                        return futureDaysForcast;
+                })
+
+
+
+                return {
+                    cityName,
+                    loadCityNme,
+                    searchTitle,
+                    currentIconCode,
+                    currentTemperature,
+                    currentHumidity,
+                    currentWindSpeed,
+                    citySearchHistory,
+                    fiveDayForecast
+                };
+            },
+        });
+
+        app.mount("#app");
+    </script>
+    </body>
+
+</html>
